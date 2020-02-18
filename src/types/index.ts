@@ -18,7 +18,21 @@ export type FeedInfo = {
 }
 
 export type FeedItem = {
-    id: string
+    id: string,
+    type: string,
+    status: string,
+    createdDate: string
+    data: {
+        from: string,
+        amount: number,
+        code: string,
+        reason: string,
+        counterPartyDisplayName: string,
+        paymentLink: string,
+        otplStatus: string,
+        customName: string,
+        subtitle: string,
+    }
 }
 
 export type FeedItems = {
