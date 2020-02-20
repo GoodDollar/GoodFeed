@@ -6,19 +6,21 @@ import {
     FeedItem
 } from '../types'
 
-export interface InterfaceFeed {
+export default interface InterfaceFeed {
 
     gun: Gun;
 
-    ready: Promise<boolean>;
+    gunUser: Gun;
 
-    init(): Promise<boolean>;
+    feeds: Gun;
 
-    login(login: string, password: string): Feeds;
+    login(login: string, password: string): Promise<Feeds | boolean>;
 
-    createFeed(feedInfo: FeedInfo): Feed;
+    createFeed(Feed: Feed): Feed | any;
 
-    getFeed(name: string): Feed;
+    getFeed(name: string): Feed | any;
+
+    getFeeds(): Feeds;
 
     updateFeedInfo(feedInfo: FeedInfo): Feed;
 

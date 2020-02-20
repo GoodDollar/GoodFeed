@@ -8,7 +8,6 @@ export type Feed = {
     privateItems: {
         [publickey: string]: EncryptedFeedItems
     }
-
 }
 
 export type FeedInfo = {
@@ -46,3 +45,6 @@ export type EncryptedFeedItems = {
         [id: string]: FeedItem
     }
 }
+
+// 0x1adb8bdad4d24bc809
+// 0x97fc1b7bf822982de9
