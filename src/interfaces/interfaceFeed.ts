@@ -20,12 +20,12 @@ export default interface InterfaceFeed {
 
     getFeed(name: string): Feed | any;
 
-    getFeeds(): Feeds;
+    getFeeds(): Promise<any> ;
 
     updateFeedInfo(feedInfo: FeedInfo): Feed;
 
-    addItem(feedItem: FeedItem): FeedItem;
+    addItem(feedInfoID: string, feedItem: FeedItem): Promise<boolean>;
 
-    addPrivateItem(feedItem: FeedItem, publicKey: string): FeedItem;
+    addPrivateItem(feedInfoID: string, feedItem: FeedItem, publicKey: string): Promise<boolean>;
 
 }
