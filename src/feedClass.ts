@@ -1,4 +1,5 @@
 import * as _ from 'lodash'
+import Gun from 'gun'
 import InterfaceFeed from './interfaces/interfaceFeed'
 import {Feed, FeedInfo, FeedItem, Feeds} from './types'
 import gunDB from './lib/gundb'
@@ -50,28 +51,28 @@ export default class feedClass implements InterfaceFeed {
 
     /**
      * add item to feed
-     * @param feedInfoID
-     * @param feedItem
+     * @param {string} feedInfoName
+     * @param {FeedItem} feedItem
      */
-    async addItem(feedInfoID: string, feedItem: FeedItem): Promise<boolean> {
+    async addItem(feedInfoName: string, feedItem: FeedItem): Promise<boolean> {
         const date = new Date();
         const day = `${date.toISOString().slice(0, 10)}`;
 
-        await this.feeds.get(feedInfoID).get('items').get(day).put(feedItem);
+        await this.feeds.get(feedInfoName).get('items').get(day).put(feedItem);
         return true
     }
 
     /**
      * Add private item to feed
-     * @param feedInfoID
-     * @param feedItem
-     * @param privateKey
+     * @param {string} feedInfoName
+     * @param {FeedItem} feedItem
+     * @param {string} privateKey
      */
-    async addPrivateItem(feedInfoID: string, feedItem: FeedItem, privateKey: string): Promise<boolean> {
+    async addPrivateItem(feedInfoName: string, feedItem: FeedItem, privateKey: string): Promise<boolean> {
         const date = new Date();
         const day = `${date.toISOString().slice(0, 10)}`;
 
-        await this.feeds.get(feedInfoID).get('privateItems').get(privateKey).get(day).put(feedItem);
+        await this.feeds.get(feedInfoName).get('privateItems').get(privateKey).get(day).put(feedItem);
         return true
     }
 
@@ -82,17 +83,38 @@ export default class feedClass implements InterfaceFeed {
      */
     async createFeed(feed: Feed): Promise<Feed | any> {
         logger.info('class createFeed');
-        const res = await this.feeds.get(feed.info.id).put(feed);
-        return res;
+
+        feed.info.owner = await this.getOwnerSoul();
+        const gunNewFeed = this.feeds.get(feed.info.name).put(feed);
+        const id = await this.getSoul(gunNewFeed);
+        await gunNewFeed.get('info').get('id').put(id);
+        return gunNewFeed;
+    }
+
+
+    /**
+     * Return user soul
+     */
+    async getOwnerSoul(): Promise<string> {
+        return await this.getSoul(this.gunUser)
+    }
+
+
+    /**
+     * Return soul gun object
+     * @param {Gun} gunInstance
+     */
+    async getSoul(gunInstance: Gun): Promise<string> {
+        return (await gunInstance)['_']['#']
     }
 
     /**
      * Get feed by id
      *
-     * @param feedInfoID
+     * @param {string} feedInfoName
      */
-    async getFeed(feedInfoID: string): Promise<Feed | any> {
-        logger.info('class getFeed', {feedInfoID});
+    async getFeed(feedInfoName: string): Promise<Feed | any> {
+        logger.info('class getFeed', {feedInfoName});
         let result: any = {
             info: {},
             items: {},
@@ -100,12 +122,12 @@ export default class feedClass implements InterfaceFeed {
         };
 
         try {
-            const info = await this.feeds.get(feedInfoID).get('info').then()
+            const info = await this.feeds.get(feedInfoName).get('info').then()
 
             if (info) {
                 result.info = _.pick(info, this.feedInfoFields);
-                result.items = await this.getFeedItems(feedInfoID);
-                result.privateItems = await this.getFeedPrivateItems(feedInfoID)
+                result.items = await this.getFeedItems(feedInfoName);
+                result.privateItems = await this.getFeedPrivateItems(feedInfoName)
             }
 
         } catch (e) {
@@ -118,22 +140,22 @@ export default class feedClass implements InterfaceFeed {
     /**
      * Return array items
      *
-     * @param feedInfoID
+     * @param {string} feedInfoName
      */
-    async getFeedItems(feedInfoID: string): Promise<FeedItem | any> {
+    async getFeedItems(feedInfoName: string): Promise<FeedItem | any> {
         let result: any = {};
-        logger.info('class getFeedItems', {feedInfoID});
-        const items = await this.feeds.get(feedInfoID).get('items').then();
+        logger.info('class getFeedItems', {feedInfoName});
+        const items = await this.feeds.get(feedInfoName).get('items').then();
         if (items) {
             for (let keyItem in items) {
                 if (keyItem !== '_') {
                     const mainFields = await this.feeds
-                        .get(feedInfoID)
+                        .get(feedInfoName)
                         .get('items')
                         .get(keyItem).map();
                     result[keyItem] = _.pick(mainFields, this.feedItemFields);
                     const dataItem = await this.feeds
-                        .get(feedInfoID)
+                        .get(feedInfoName)
                         .get('items')
                         .get(keyItem)
                         .map()
@@ -148,18 +170,18 @@ export default class feedClass implements InterfaceFeed {
     /**
      * Return array items
      *
-     * @param feedInfoID
+     * @param {string} feedInfoName
      */
-    async getFeedPrivateItems(feedInfoID: string): Promise<FeedItem | any> {
+    async getFeedPrivateItems(feedInfoName: string): Promise<FeedItem | any> {
         let result: any = {};
-        logger.info('class getFeedPrivateItems', {feedInfoID});
-        const privateItems = await this.feeds.get(feedInfoID).get('privateItems').then();
+        logger.info('class getFeedPrivateItems', {feedInfoName});
+        const privateItems = await this.feeds.get(feedInfoName).get('privateItems').then();
         if (privateItems) {
             for (let privateKey in privateItems) {
-                if (privateKey == 'private_key_3') {
+                if (privateKey !== '_') {
                     result[privateKey] = {};
                     let items = await this.feeds
-                        .get(feedInfoID)
+                        .get(feedInfoName)
                         .get('privateItems')
                         .get(privateKey)
                         .then();
@@ -167,16 +189,21 @@ export default class feedClass implements InterfaceFeed {
                         for (let keyItem in items) {
                             if (keyItem !== '_') {
                                 const mainFields = await this.feeds
-                                    .get(feedInfoID)
+                                    .get(feedInfoName)
                                     .get('privateItems')
                                     .get(privateKey)
                                     .get(keyItem)
+                                    .map()
+                                console.log('**********************')
+                                console.log(mainFields)
+                                console.log('**********************')
                                 result[privateKey][keyItem] = _.pick(mainFields, this.feedItemFields);
                                 const dataItem = await this.feeds
-                                    .get(feedInfoID)
+                                    .get(feedInfoName)
                                     .get('privateItems')
                                     .get(privateKey)
                                     .get(keyItem)
+                                    .map()
                                     .get('data')
                                 result[privateKey][keyItem].data = _.pick(dataItem, this.feedItemDataFields)
                             }

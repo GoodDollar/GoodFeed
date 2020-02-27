@@ -22,15 +22,9 @@ import {FeedInfo, FeedItem} from "index";
     };
 
     const ne = new feedClass();
-    const result = await ne.login('test_user', 'test_user');
+    await ne.login('test_user2', 'test_user2');
     const date = new Date();
-    let day = `${date.toISOString().slice(0, 10)}`;
-    // await ne.addPrivateItem("test_feed_2", feedItem,'private_key_3');
-
-    const feeds = await ne.getFeeds();
-    console.log('***************************')
-    console.log(feeds['test_feed_2'])
-    console.log('***************************')
+    let day = date.toISOString();
 
     const feedItem2: FeedItem = {
         id: 'string2',
@@ -51,12 +45,12 @@ import {FeedInfo, FeedItem} from "index";
     };
 
     const itemInfo: FeedInfo = {
-        name: "Test feed 2",
-        id: "test_feed_2",
-        owner: "1"
+        name: "Test feed SOLD 222",
+        id: "",
+        owner: ""
     };
 
-    // ne.createFeed({
+    // await ne.createFeed({
     //     info: itemInfo,
     //     items: {
     //         [day]: {
@@ -67,7 +61,7 @@ import {FeedInfo, FeedItem} from "index";
     //         }
     //     },
     //     privateItems: {
-    //         privatKey:{
+    //         privateKey:{
     //             [day]: {
     //                 [feedItem.id]: feedItem
     //             },
@@ -78,5 +72,9 @@ import {FeedInfo, FeedItem} from "index";
     //     }
     // })
 
+    const feeds = await ne.getFeeds();
+    console.log('***************************')
+    console.log(feeds['Test feed SOLD 222']['privateItems']['privateKey'])
+    console.log('***************************')
     console.log('=======================================')
 })()
